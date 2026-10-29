@@ -9,14 +9,12 @@ from finance_assistant.workflow import Workflow, WorkflowError, load_dsl, report
 
 st.set_page_config(page_title="金融合规审查助手", page_icon="◈", layout="wide")
 st.markdown("""<style>
-.stApp {background:#f5f7fb;}
 .block-container {max-width:1160px;padding-top:2.4rem;}
-[data-testid="stSidebar"] {background:#eef2f7;}
-h1,h2,h3 {color:#132c48;}
 .hero {border-left:5px solid #137d8d;padding:10px 0 10px 20px;margin-bottom:24px;}
-.eyebrow {color:#137d8d;font-size:12px;letter-spacing:2px;font-weight:700;}
-.hero p {color:#627186;font-size:15px;margin-bottom:0;}
-[data-testid="stChatMessage"] {background:white;border:1px solid #e4eaf2;border-radius:12px;}
+.hero h1 {color:inherit;}
+.eyebrow {color:inherit;opacity:.85;font-size:12px;letter-spacing:2px;font-weight:700;}
+.hero p {color:inherit;opacity:.8;font-size:15px;margin-bottom:0;}
+[data-testid="stChatMessage"] {border:1px solid rgba(128,128,128,.3);border-radius:12px;}
 .stButton>button {border-radius:8px;}
 </style>""", unsafe_allow_html=True)
 
@@ -58,12 +56,14 @@ with st.sidebar:
         st.rerun()
 
 st.markdown('<div class="hero"><div class="eyebrow">FINANCIAL COMPLIANCE / REVIEW DESK</div><h1>金融合规审查助手</h1><p>识别审查任务 · 检索监管依据 · 定位风险与修改建议</p></div>', unsafe_allow_html=True)
-reviewer_unavailable = settings.evaluation_mode and (
-    not settings.api_key or
-    (backend == "local" and not knowledge_files(settings.knowledge_dir))
-)
+missing_services = []
+if not settings.api_key:
+    missing_services.append("模型连接")
+if not knowledge_files(settings.knowledge_dir):
+    missing_services.append("法规知识库")
+reviewer_unavailable = settings.evaluation_mode and bool(missing_services)
 if reviewer_unavailable:
-    st.error("审查服务尚未完成配置，请联系参赛团队接通模型和法规资料后再测试。")
+    st.error("审查服务尚未完成配置：" + "、".join(missing_services) + "尚未就绪。请联系参赛团队配置后再测试。")
 if mode == "faithful":
     st.warning("原版对照保留 DSL 的接线问题：合同正文来源错误，一般咨询引用未执行节点可能报错。用于迁移核对。")
 elif backend == "local" and not knowledge_files(settings.knowledge_dir):
