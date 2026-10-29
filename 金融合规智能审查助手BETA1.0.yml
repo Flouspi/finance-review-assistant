@@ -1,0 +1,1355 @@
+app:
+  description: 您的金融合规审查助手！
+  icon: 💬
+  icon_background: '#E1EFFE'
+  icon_type: emoji
+  mode: advanced-chat
+  name: 金融合规智能审查助手BETA1.0
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.26@bdf47cb41e9062bba00d26625d2a795c1874011d8ce64bff738c44b5a31787ea
+    version: null
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/tongyi:0.2.24@21cf04c4a5cc4438c3f634cebbaa1d969b42056d5b8e45878b74b2b3981b7259
+    version: null
+kind: app
+version: 0.7.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - video
+      - audio
+      - image
+      - document
+      allowed_file_upload_methods:
+      - remote_url
+      - local_file
+      enabled: true
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 50
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        knowledge_file_size_limit: 15
+        single_chunk_attachment_limit: 10
+        skill_file_size_limit: 50
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: '金融合规智能助手
+
+
+      您好，我可以帮助您快速完成金融业务合规审查！
+
+
+      支持：
+
+      📄 合同合规审查
+
+      📊 金融产品合规审查
+
+      📈 投资范围合规分析
+
+      📢 营销宣传风险检测
+
+
+      请上传文件或输入审查内容。
+
+
+
+      [审查合同]
+
+      [审查理财产品]
+
+      [检查宣传文案]'
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - 请帮我审查这份金融合同是否存在合规风险
+    - 请审查该理财产品是否符合金融监管要求
+    - 请分析该产品投资范围是否存在合规风险
+    - 请检查这段金融宣传文案是否存在违规表述
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: start_node--1790943120627-target
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: '1790943120627'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: if-else
+      id: 1790943120627-source-1790943283414-target
+      selected: false
+      source: '1790943120627'
+      sourceHandle: source
+      target: '1790943283414'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: document-extractor
+      id: 1790943283414-true-1790740261714-target
+      selected: false
+      source: '1790943283414'
+      sourceHandle: 'true'
+      target: '1790740261714'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: document-extractor
+        targetType: knowledge-retrieval
+      id: 1790740261714-source-1790738486191-target
+      selected: false
+      source: '1790740261714'
+      sourceHandle: source
+      target: '1790738486191'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1790738486191-source-1791091133499-target
+      selected: false
+      source: '1790738486191'
+      sourceHandle: source
+      target: '1791091133499'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1791091133499-source-1791092840620-target
+      selected: false
+      source: '1791091133499'
+      sourceHandle: source
+      target: '1791092840620'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: knowledge-retrieval
+      id: 1790943283414-bdf25015-4aab-4a5f-851d-a00b9c09b6fc-1791340926292-target
+      selected: false
+      source: '1790943283414'
+      sourceHandle: bdf25015-4aab-4a5f-851d-a00b9c09b6fc
+      target: '1791340926292'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1791340926292-source-1791340951911-target
+      selected: false
+      source: '1791340926292'
+      sourceHandle: source
+      target: '1791340951911'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1791340951911-source-1791341218195-target
+      selected: false
+      source: '1791340951911'
+      sourceHandle: source
+      target: '1791341218195'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: knowledge-retrieval
+      id: 1790943283414-ab2c395a-39fc-4743-a3ba-d5c696038bc4-1791341376848-target
+      selected: false
+      source: '1790943283414'
+      sourceHandle: ab2c395a-39fc-4743-a3ba-d5c696038bc4
+      target: '1791341376848'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1791341376848-source-1791341427245-target
+      selected: false
+      source: '1791341376848'
+      sourceHandle: source
+      target: '1791341427245'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1791341427245-source-1791341859173-target
+      selected: false
+      source: '1791341427245'
+      sourceHandle: source
+      target: '1791341859173'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: knowledge-retrieval
+      id: 1790943283414-42465b4f-3674-44b9-a6e3-9145a7090939-1791341901839-target
+      selected: false
+      source: '1790943283414'
+      sourceHandle: 42465b4f-3674-44b9-a6e3-9145a7090939
+      target: '1791341901839'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1791341901839--1791341918341-target
+      selected: false
+      source: '1791341901839'
+      sourceHandle: source
+      target: '1791341918341'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1791341918341-source-1791341983396-target
+      selected: false
+      source: '1791341918341'
+      sourceHandle: source
+      target: '1791341983396'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1791683413962-source-1791683490885-target
+      selected: false
+      source: '1791683413962'
+      sourceHandle: source
+      target: '1791683490885'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: 1790943283414-2b430410-44b8-4f66-807b-bdb1b45ab532-1791683413962-target
+      selected: false
+      source: '1790943283414'
+      sourceHandle: 2b430410-44b8-4f66-807b-bdb1b45ab532
+      target: '1791683413962'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 开始
+        type: start
+        variables: []
+      height: 72
+      id: start_node
+      position:
+        x: -736.9422152029463
+        y: 40.76901732311438
+      positionAbsolute:
+        x: -736.9422152029463
+        y: 40.76901732311438
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - M9SQ2GyjNX0SAJoH5WiJ2pmTiMD3iZXU9lt407cemsy9U8cRUc6iiCyaHcZVUn7b
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: reranking_model
+          reranking_model:
+            model: qwen3-rerank
+            provider: langgenius/tongyi/tongyi
+          top_k: 4
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1790943120627'
+        - text
+        retrieval_mode: multiple
+        selected: false
+        title: 知识检索
+        type: knowledge-retrieval
+      height: 89
+      id: '1790738486191'
+      position:
+        x: 561.9993476705248
+        y: 112.27457913891386
+      positionAbsolute:
+        x: 561.9993476705248
+        y: 112.27457913891386
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        is_array_file: true
+        selected: false
+        title: 文档提取器
+        type: document-extractor
+        variable_selector:
+        - sys
+        - files
+      height: 103
+      id: '1790740261714'
+      position:
+        x: 231.54340570447755
+        y: 112.27457913891386
+      positionAbsolute:
+        x: 231.54340570447755
+        y: 112.27457913891386
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - sys
+          - query
+        model:
+          completion_params:
+            temperature: 0.7
+            thinking: false
+          mode: chat
+          name: deepseek-flash
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - id: d89b1cd0-825a-4f17-8335-5a5feb2ecf0d
+          role: system
+          text: '你是金融合规任务分类器。
+
+
+            请根据下面的用户问题进行分类。
+
+
+            用户问题：
+
+            {{#sys.query#}}
+
+
+            分类规则：
+
+            - 如果用户要求审查合同、合同条款、协议等，输出：合同审查
+
+            - 如果用户要求审查金融产品，输出：产品合规审查
+
+            - 如果用户要求审查投资范围，输出：投资范围审查
+
+            - 如果用户要求审查广告、宣传、营销文案，输出：营销宣传合规审查
+
+            - 其他情况输出：其他
+
+
+            要求：
+
+            只输出分类名称，不要解释。
+
+
+            用户问题中只要明确要求“审查合同”或出现合同条款审查，就必须输出：
+
+            合同审查
+
+
+            【意图分类通用判断原则】
+
+
+            分类时必须理解用户真实意图，不允许仅根据单个词语匹配。
+
+
+            判断标准：
+
+
+            一、产品合规审查判断原则：
+
+
+            当用户的核心意图是评价某个金融产品本身是否合规、安全、可靠、风险可控、是否值得购买、收益是否合理时，归类为“产品合规审查”。
+
+
+            判断重点：
+
+            用户关注对象是“金融产品”，关注维度包括但不限于：
+
+            - 产品风险
+
+            - 产品收益
+
+            - 产品安全性
+
+            - 产品合法性
+
+            - 产品购买适当性
+
+            - 产品是否存在问题
+
+
+            即使用户没有明确说“产品”“理财”“基金”，只要上下文指向某个金融投资对象，也应归入产品合规审查。
+
+
+
+            二、合同审查判断原则：
+
+
+            当用户的核心意图是审查某份具有法律约束关系的文件内容时，归类为“合同审查”。
+
+
+            判断重点：
+
+            用户关注对象是“合同文件”，包括：
+
+            - 合同
+
+            - 协议
+
+            - 条款
+
+            - 约定内容
+
+            - 签署文件
+
+
+            如果用户是在判断文件中的权利义务、责任、违约、条款风险，则属于合同审查。
+
+
+            注意：
+
+            仅出现“风险”“合法吗”“安全吗”等词，不代表合同审查。
+
+            必须存在明确的合同文件审查意图。
+
+
+
+            三、投资范围审查判断原则：
+
+
+            当用户的核心意图是判断金融产品资金如何配置、投向哪里、投资比例是否合理或是否符合限制时，归类为“投资范围审查”。
+
+
+            判断重点：
+
+            用户关注的是资产配置问题，而不是产品整体风险。
+
+
+            包括：
+
+            - 投资对象
+
+            - 资产类别
+
+            - 投资比例
+
+            - 资金用途
+
+            - 配置比例
+
+            - 投资限制
+
+
+
+            四、营销宣传合规审查判断原则：
+
+
+            当用户的核心意图是判断对外宣传内容、销售表达、广告文案、推广话术是否合规时，归类为“营销宣传合规审查”。
+
+
+            判断重点：
+
+            用户关注的是“宣传表达方式”，而不是产品本身。
+
+
+            包括：
+
+            - 宣传语言
+
+            - 广告内容
+
+            - 推广材料
+
+            - 销售话术
+
+            - 收益承诺表达
+
+
+
+            五、其他判断原则：
+
+
+            当用户的问题不涉及上述四类金融合规审查对象时，归类为“其他”。
+
+
+            包括：
+
+            - 普通金融知识咨询
+
+            - 概念解释
+
+            - 投资建议请求
+
+            - 与具体产品、合同、宣传、投资范围无关的问题
+
+
+
+            【冲突处理规则】
+
+
+            当多个类别同时出现时，按照用户真正想审查的对象判断：
+
+
+            1. 审查宣传怎么说 → 营销宣传合规审查
+
+            2. 审查合同文件内容 → 合同审查
+
+            3. 审查资金投向和比例 → 投资范围审查
+
+            4. 审查产品风险、收益、安全 → 产品合规审查
+
+
+            不要因为出现某个关键词自动分类。
+
+
+            例如：
+
+            “这个产品宣传安全吗”
+
+            重点是宣传 → 营销宣传合规审查
+
+
+            “这个产品合同安全吗”
+
+            重点是合同 → 合同审查
+
+
+            “这个产品投资股票安全吗”
+
+            重点是投资范围 → 投资范围审查'
+        retry_config:
+          max_retries: 3
+          retry_enabled: false
+          retry_interval: 1000
+        selected: false
+        structured_output_enabled: false
+        title: LLM 2
+        type: llm
+        vision:
+          enabled: false
+      height: 87
+      id: '1790943120627'
+      position:
+        x: -446.6618444990522
+        y: 290.0438858868251
+      positionAbsolute:
+        x: -446.6618444990522
+        y: 290.0438858868251
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: contains
+            id: 876a2ed2-86c5-40fa-adad-e9ef11431faa
+            value: 合同审查
+            varType: string
+            variable_selector:
+            - '1790943120627'
+            - text
+          logical_operator: and
+        - case_id: bdf25015-4aab-4a5f-851d-a00b9c09b6fc
+          conditions:
+          - comparison_operator: contains
+            id: ba552b67-0d87-4ba8-8c04-208e2642c678
+            value: 产品合规审查
+            varType: string
+            variable_selector:
+            - '1790943120627'
+            - text
+          logical_operator: and
+        - case_id: ab2c395a-39fc-4743-a3ba-d5c696038bc4
+          conditions:
+          - comparison_operator: contains
+            id: 54520304-3f50-4254-ac98-1c7e17006549
+            value: 投资范围审查
+            varType: string
+            variable_selector:
+            - '1790943120627'
+            - text
+          logical_operator: and
+        - case_id: 42465b4f-3674-44b9-a6e3-9145a7090939
+          conditions:
+          - comparison_operator: contains
+            id: d612770d-9791-4bf1-9d02-fe3c47ecdc37
+            value: 营销宣传合规审查
+            varType: string
+            variable_selector:
+            - '1790943120627'
+            - text
+          logical_operator: and
+        - case_id: 2b430410-44b8-4f66-807b-bdb1b45ab532
+          conditions:
+          - comparison_operator: contains
+            id: 5d4feede-5372-49e6-80cd-a0db1930ae54
+            value: 其他
+            varType: string
+            variable_selector:
+            - '1790943120627'
+            - text
+          logical_operator: and
+        selected: false
+        title: 条件分支
+        type: if-else
+      height: 387
+      id: '1790943283414'
+      position:
+        x: -121.38834989153467
+        y: 290.0438858868251
+      positionAbsolute:
+        x: -121.38834989153467
+        y: 290.0438858868251
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1790740261714'
+          - text
+        model:
+          completion_params:
+            temperature: 0.7
+            thinking: false
+          mode: chat
+          name: deepseek-flash
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - id: abc21486-01e4-454c-9f63-f52f61ef87bf
+          role: system
+          text: '# 角色
+
+            你是一名金融合同合规审查智能助手。
+
+
+            # 核心任务
+
+            根据用户提供的合同文本，并结合知识库中的金融监管规则，对合同进行合规审查。
+
+
+            # 审查要求
+
+            1. 检查合同是否存在明显的金融合规风险。
+
+            2. 优先依据知识库中的法规和监管要求进行判断。
+
+            3. 对发现的问题指出对应的合同内容。
+
+            4. 给出风险等级和修改建议。
+
+            5. 如果信息不足，明确说明无法判断，不得编造结论。
+
+
+            # 合同文本
+
+            {{#1790943120627.text#}}
+
+
+            # 知识库参考资料
+
+            {{#context#}}
+
+
+            # 输出格式
+
+            审查结果：
+
+            - 风险等级：
+
+            - 主要问题：
+
+            - 合规依据：
+
+            - 修改建议：'
+        selected: false
+        title: LLM 3
+        type: llm
+        vision:
+          enabled: false
+      height: 87
+      id: '1791091133499'
+      position:
+        x: 911.1369971143075
+        y: 112.27457913891386
+      positionAbsolute:
+        x: 911.1369971143075
+        y: 112.27457913891386
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        answer: '{{#1791091133499.text#}}'
+        selected: false
+        title: 直接回复 2
+        type: answer
+        variables: []
+      height: 101
+      id: '1791092840620'
+      position:
+        x: 1247.9759672507432
+        y: 112.27457913891386
+      positionAbsolute:
+        x: 1247.9759672507432
+        y: 112.27457913891386
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - M9SQ2GyjNX0SAJoH5WiJ2pmTiMD3iZXU9lt407cemsy9U8cRUc6iiCyaHcZVUn7b
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: reranking_model
+          reranking_model:
+            model: qwen3-rerank
+            provider: langgenius/tongyi/tongyi
+          top_k: 4
+        query_attachment_selector: []
+        query_variable_selector:
+        - start_node
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: 知识检索 2
+        type: knowledge-retrieval
+      height: 89
+      id: '1791340926292'
+      position:
+        x: 231.54340570447755
+        y: 299.53982621048385
+      positionAbsolute:
+        x: 231.54340570447755
+        y: 299.53982621048385
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1791340926292'
+          - result
+        model:
+          completion_params:
+            temperature: 0.7
+            thinking: false
+          mode: chat
+          name: deepseek-flash
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - id: b905dde4-00fa-48a2-aec5-388ddf7e94eb
+          role: system
+          text: '# 角色
+
+            你是一名金融产品合规审查智能助手。
+
+
+            # 核心任务
+
+            根据用户提供的金融产品信息，并结合知识库中的金融监管规则，对金融产品进行合规审查。
+
+
+            # 审查要求
+
+            1. 判断该金融产品是否存在明显的金融合规风险。
+
+            2. 优先依据知识库中的法规和监管要求进行判断。
+
+            3. 检查产品类型、投资方向、收益承诺、风险揭示等内容是否存在合规问题。
+
+            4. 对发现的问题说明具体原因。
+
+            5. 给出风险等级和修改建议。
+
+            6. 如果信息不足，明确说明无法判断，不得编造结论。
+
+
+            # 产品信息
+
+            {{#sys.query#}}
+
+
+            #知识库参考资料
+
+            {{#context#}}
+
+
+            # 输出格式
+
+            审查结果：
+
+            - 风险等级：
+
+            - 主要问题：
+
+            - 合规依据：
+
+            - 修改建议：'
+        selected: false
+        title: LLM 4
+        type: llm
+        vision:
+          enabled: false
+      height: 87
+      id: '1791340951911'
+      position:
+        x: 561.9993476705248
+        y: 299.53982621048385
+      positionAbsolute:
+        x: 561.9993476705248
+        y: 299.53982621048385
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        answer: '{{#1791340951911.text#}}'
+        selected: false
+        title: 直接回复 3
+        type: answer
+        variables: []
+      height: 101
+      id: '1791341218195'
+      position:
+        x: 911.1369971143075
+        y: 299.53982621048385
+      positionAbsolute:
+        x: 911.1369971143075
+        y: 299.53982621048385
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - M9SQ2GyjNX0SAJoH5WiJ2pmTiMD3iZXU9lt407cemsy9U8cRUc6iiCyaHcZVUn7b
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: reranking_model
+          top_k: 4
+        query_attachment_selector: []
+        query_variable_selector:
+        - start_node
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: 知识检索 3
+        type: knowledge-retrieval
+      height: 89
+      id: '1791341376848'
+      position:
+        x: 231.54340570447755
+        y: 452.27201188308345
+      positionAbsolute:
+        x: 231.54340570447755
+        y: 452.27201188308345
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1791341376848'
+          - result
+        model:
+          completion_params:
+            temperature: 0.7
+            thinking: false
+          mode: chat
+          name: deepseek-flash
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - id: 79aa083b-a29f-4c30-8f9a-542bda997300
+          role: system
+          text: '# 角色
+
+            你是一名金融投资范围合规审查智能助手。
+
+
+            # 核心任务
+
+            根据用户提供的投资对象、投资行为或资金运用方式，结合知识库中的金融监管规则，判断该投资行为是否符合规定的投资范围。
+
+
+            # 审查要求
+
+            1. 判断用户描述的投资行为是否属于允许的投资范围。
+
+            2. 优先依据知识库中的法规和监管要求进行判断。
+
+            3. 明确说明允许、不允许或暂时无法判断。
+
+            4. 指出相关的监管依据。
+
+            5. 对存在的合规风险进行说明。
+
+            6. 如果信息不足，明确说明无法判断，不得编造结论。
+
+
+            # 用户问题
+
+            {{#sys.query#}}
+
+
+            # 知识库参考资料
+
+            {{#context#}}
+
+
+            # 输出格式
+
+            审查结果：
+
+            - 判断结果：
+
+            - 风险等级：
+
+            - 主要问题：
+
+            - 合规依据：
+
+            - 修改建议：'
+        selected: false
+        title: LLM 5
+        type: llm
+        vision:
+          enabled: false
+      height: 87
+      id: '1791341427245'
+      position:
+        x: 561.9993476705248
+        y: 452.27201188308345
+      positionAbsolute:
+        x: 561.9993476705248
+        y: 452.27201188308345
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        answer: '{{#1791341427245.text#}}'
+        selected: false
+        title: 直接回复 4
+        type: answer
+        variables: []
+      height: 101
+      id: '1791341859173'
+      position:
+        x: 911.1369971143075
+        y: 452.27201188308345
+      positionAbsolute:
+        x: 911.1369971143075
+        y: 452.27201188308345
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - M9SQ2GyjNX0SAJoH5WiJ2pmTiMD3iZXU9lt407cemsy9U8cRUc6iiCyaHcZVUn7b
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: reranking_model
+          top_k: 4
+        query_attachment_selector: []
+        query_variable_selector:
+        - start_node
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: 知识检索 4
+        type: knowledge-retrieval
+      height: 89
+      id: '1791341901839'
+      position:
+        x: 231.54340570447755
+        y: 599.7726250200301
+      positionAbsolute:
+        x: 231.54340570447755
+        y: 599.7726250200301
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1791341901839'
+          - result
+        model:
+          completion_params:
+            temperature: 0.7
+            thinking: false
+          mode: chat
+          name: deepseek-flash
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - id: 47dd5f12-0a06-4444-a2a3-bd53e050f119
+          role: system
+          text: '# 角色
+
+            你是一名金融营销宣传合规审查智能助手。
+
+
+            # 核心任务
+
+            根据用户提供的广告、宣传文案、营销话术或推广材料，结合知识库中的金融监管规则，对其进行合规审查。
+
+
+            # 审查要求
+
+            1. 检查宣传内容是否存在明显的金融合规风险。
+
+            2. 重点检查收益承诺、保本承诺、夸大宣传、误导性表述等问题。
+
+            3. 优先依据知识库中的法规和监管要求进行判断。
+
+            4. 指出存在问题的具体宣传内容。
+
+            5. 给出风险等级和修改建议。
+
+            6. 如果信息不足，明确说明无法判断，不得编造结论。
+
+
+            # 宣传内容
+
+            {{#sys.query#}}
+
+
+            # 知识库参考资料
+
+            {{#context#}}
+
+
+            # 输出格式
+
+            审查结果：
+
+            - 风险等级：
+
+            - 主要问题：
+
+            - 合规依据：
+
+            - 修改建议：'
+        selected: false
+        title: LLM 6
+        type: llm
+        vision:
+          enabled: false
+      height: 87
+      id: '1791341918341'
+      position:
+        x: 561.9993476705248
+        y: 599.7726250200301
+      positionAbsolute:
+        x: 561.9993476705248
+        y: 599.7726250200301
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        answer: '{{#1791341918341.text#}}'
+        selected: false
+        title: 直接回复 5
+        type: answer
+        variables: []
+      height: 101
+      id: '1791341983396'
+      position:
+        x: 911.1369971143075
+        y: 599.7726250200301
+      positionAbsolute:
+        x: 911.1369971143075
+        y: 599.7726250200301
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - M9SQ2GyjNX0SAJoH5WiJ2pmTiMD3iZXU9lt407cemsy9U8cRUc6iiCyaHcZVUn7b
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: reranking_model
+          top_k: 4
+        query_attachment_selector: []
+        query_variable_selector:
+        - start_node
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: 知识检索 5
+        type: knowledge-retrieval
+      height: 89
+      id: '1791683391369'
+      position:
+        x: 1546.3053099285135
+        y: 581.7744556300083
+      positionAbsolute:
+        x: 1546.3053099285135
+        y: 581.7744556300083
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1791683391369'
+          - result
+        model:
+          completion_params:
+            temperature: 0.7
+            thinking: false
+          mode: chat
+          name: deepseek-flash
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - id: 3280271d-fb48-4b2a-a9db-b2850d66a7e1
+          role: system
+          text: '你是金融合规智能助手
+
+
+            当用户的问题不属于合同审查、产品合规审查、投资范围审查、营销宣传合规审查时，请进行一般金融风险提示
+
+
+            要求：
+
+            1. 回答用户问题
+
+            2. 不编造监管结论
+
+            3. 如涉及具体产品，请提示用户提供详细资料
+
+            4. 输出简洁专业
+
+            5.不需要输出您的问题未涉及合同审查、产品合规审查、投资范围审查或营销宣传合规审查的具体内容，因此无法给出针对性合规意见这句话，只需回答用户问题即可
+
+
+            #知识库参考资料
+
+            {{#context#}}'
+        selected: false
+        title: LLM 7
+        type: llm
+        vision:
+          enabled: false
+      height: 87
+      id: '1791683413962'
+      position:
+        x: 231.54340570447755
+        y: 755.2348754223985
+      positionAbsolute:
+        x: 231.54340570447755
+        y: 755.2348754223985
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        answer: '{{#1791683413962.text#}}'
+        selected: false
+        title: 直接回复 5
+        type: answer
+        variables: []
+      height: 101
+      id: '1791683490885'
+      position:
+        x: 561.9993476705248
+        y: 755.2348754223985
+      positionAbsolute:
+        x: 561.9993476705248
+        y: 755.2348754223985
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: deepseek-flash
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - id: 7def3991-dbcb-43ac-9fc0-cb217760ffd6
+          role: system
+          text: ''
+        selected: false
+        title: LLM 8
+        type: llm
+        vision:
+          enabled: false
+      height: 87
+      id: '1791891803698'
+      position:
+        x: -446.6618444990522
+        y: -221.01453343432823
+      positionAbsolute:
+        x: -446.6618444990522
+        y: -221.01453343432823
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    viewport:
+      x: 541.3846219542525
+      y: 228.3848199557907
+      zoom: 0.6597539553864472
+  rag_pipeline_variables: []
