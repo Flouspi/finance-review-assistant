@@ -4,7 +4,7 @@ import streamlit as st
 
 from finance_assistant.config import Settings
 from finance_assistant.documents import InputError
-from finance_assistant.providers import ChatModel, ConfigurationError, ProviderError, knowledge_provider
+from finance_assistant.providers import ChatModel, ConfigurationError, ProviderError, knowledge_provider, knowledge_files
 from finance_assistant.workflow import Workflow, WorkflowError, load_dsl, report_markdown
 
 st.set_page_config(page_title="金融合规审查助手", page_icon="◈", layout="wide")
@@ -32,8 +32,6 @@ settings = Settings.load(cloud_config)
 entered_key = ""
 base_url = settings.base_url
 model_name = settings.model or "deepseek-flash"
-dify_key = ""
-dataset_id = settings.dify_dataset_id
 mode = "corrected"
 backend = settings.knowledge_backend
 
@@ -45,20 +43,13 @@ with st.sidebar:
     else:
         mode_label = st.selectbox("工作流版本", ["修正版（参赛推荐）", "原版对照"])
         mode = "corrected" if mode_label.startswith("修正版") else "faithful"
-        backend_label = st.selectbox("法规资料来源", ["本地知识库", "Dify 原知识库"], index=1 if settings.knowledge_backend == "dify" else 0)
-        backend = "dify" if backend_label == "Dify 原知识库" else "local"
+        st.caption("法规资料来源：项目自有知识库")
         st.caption("已读取本地模型密钥" if settings.api_key else "尚未配置模型密钥")
         with st.expander("模型连接", expanded=not bool(settings.api_key)):
             entered_key = st.text_input("模型 API key（仅本次会话）", type="password", help="留空时读取项目 .env 或环境变量；不会写入报告。")
             base_url = st.text_input("API Base URL", value=settings.base_url)
             model_name = st.text_input("模型名称", value=settings.model or "deepseek-flash")
-        if backend == "dify":
-            with st.expander("Dify 知识库连接", expanded=not bool(settings.dify_dataset_id)):
-                st.caption("需要知识库 API key，与应用 API key 不同。")
-                dify_key = st.text_input("知识库 API key（仅本次会话）", type="password")
-                dataset_id = st.text_input("知识库 UUID", value=dataset_id)
-        else:
-            st.caption("将法规 TXT、MD、PDF、DOCX、CSV 放入项目 knowledge 文件夹。")
+        st.caption("将法规 TXT、MD、PDF、DOCX、CSV 放入项目 knowledge 文件夹。")
     files = st.file_uploader("上传待审查材料", type=["txt", "md", "csv", "pdf", "docx"], accept_multiple_files=True,
                              help="最多 3 份、每份 15 MB；扫描版 PDF 需先 OCR。材料只用于本轮，不自动加入法规库。")
     st.caption("每次提交独立审查；历史记录仅用于本页展示。")
@@ -69,15 +60,14 @@ with st.sidebar:
 st.markdown('<div class="hero"><div class="eyebrow">FINANCIAL COMPLIANCE / REVIEW DESK</div><h1>金融合规审查助手</h1><p>识别审查任务 · 检索监管依据 · 定位风险与修改建议</p></div>', unsafe_allow_html=True)
 reviewer_unavailable = settings.evaluation_mode and (
     not settings.api_key or
-    (backend == "dify" and (not settings.dify_api_key or not settings.dify_dataset_id)) or
-    (backend == "local" and not any(p.is_file() and p.suffix.lower() in {".txt", ".md", ".pdf", ".docx", ".csv"} for p in settings.knowledge_dir.rglob("*")))
+    (backend == "local" and not knowledge_files(settings.knowledge_dir))
 )
 if reviewer_unavailable:
     st.error("审查服务尚未完成配置，请联系参赛团队接通模型和法规资料后再测试。")
 if mode == "faithful":
     st.warning("原版对照保留 DSL 的接线问题：合同正文来源错误，一般咨询引用未执行节点可能报错。用于迁移核对。")
-elif backend == "local" and not any(p.is_file() and p.suffix.lower() in {".txt", ".md", ".pdf", ".docx", ".csv"} for p in settings.knowledge_dir.rglob("*")):
-    st.info("法规知识库尚未接入。你可以先配置模型并体验流程；完整审查需要提供原知识库资料或连接 Dify。")
+elif backend == "local" and not knowledge_files(settings.knowledge_dir):
+    st.info("自有知识库尚未导入资料。请将法规、制度或业务规则放入项目 knowledge 文件夹。")
 
 if "reviews" not in st.session_state:
     st.session_state.reviews = []
@@ -98,6 +88,12 @@ def display_result(record, index):
             for i, citation in enumerate(state.get("citations", []), 1):
                 st.markdown(f"**证据{i} · {citation['source']}**")
                 st.caption(citation.get("location", ""))
+                if citation.get("evidence_type"):
+                    st.caption("资料层级：" + citation["evidence_type"])
+                if citation.get("verification_status"):
+                    st.caption("原表核验状态（本次未独立复核）：" + citation["verification_status"])
+                if citation.get("source_url"):
+                    st.write("原始来源：", citation["source_url"])
                 st.text(citation["content"])
         with st.expander("查看执行过程"):
             st.dataframe(state.get("trace", []), hide_index=True, width="stretch")
@@ -121,7 +117,7 @@ with st.form("review_form", clear_on_submit=False):
 
 if submitted:
     runtime = replace(settings, api_key=entered_key or settings.api_key, base_url=base_url.rstrip("/"), model=model_name,
-                      knowledge_backend=backend, dify_api_key=dify_key or settings.dify_api_key, dify_dataset_id=dataset_id)
+                      knowledge_backend=backend)
     if not runtime.api_key:
         st.error("请先在左侧填写模型 API key，或配置项目 .env 文件。")
     else:

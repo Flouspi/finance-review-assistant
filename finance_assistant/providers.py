@@ -2,12 +2,20 @@ import re
 import math
 from collections import Counter
 from urllib.parse import urlparse
-from uuid import UUID
+import hashlib
+import json
 
 import httpx
 
 from .config import Settings
 from .documents import SUPPORTED, extract
+
+KNOWLEDGE_EXTENSIONS = SUPPORTED | {".jsonl"}
+
+
+def knowledge_files(directory):
+    return sorted(p for p in directory.rglob("*") if p.is_file() and p.suffix.lower() in KNOWLEDGE_EXTENSIONS
+                  and not any(part.startswith(".") for part in p.relative_to(directory).parts))
 
 
 class ConfigurationError(ValueError):
@@ -68,31 +76,71 @@ def tokens(text):
 
 
 class LocalKnowledge:
-    """Local BM25 fallback, explicitly different from Dify vector retrieval."""
+    """Independent document collection with BM25 retrieval and provenance."""
     def __init__(self, directory):
         self.directory = directory
         self.chunks = None
+        self.documents = []
+        self.record_count = 0
+
+    def _structured_records(self, path, raw, chunks):
+        try:
+            records = [json.loads(line) for line in raw.decode("utf-8").splitlines() if line.strip()]
+        except (ValueError, UnicodeDecodeError):
+            raise ConfigurationError(f"{path.name} 不是有效的 UTF-8 JSONL 知识库。") from None
+        for record in records:
+            if not isinstance(record, dict) or not all(record.get(key) for key in ("id", "text", "source", "location")):
+                raise ConfigurationError(f"{path.name} 中的知识记录缺少 ID、正文或来源位置。")
+            text = record["text"]
+            if not isinstance(text, str):
+                raise ConfigurationError(f"{path.name} 中的知识正文必须为字符串。")
+            for start in range(0, len(text), 850):
+                content = text[start:start + 1000]
+                chunks.append({"id": f"{record['id']}:{start}", "record_id": record["id"],
+                               "source": record["source"], "location": record["location"],
+                               "title": record.get("title", ""), "sheet": record.get("sheet", ""),
+                               "source_url": record.get("source_url", ""),
+                               "evidence_type": record.get("evidence_type", ""),
+                               "verification_status": record.get("verification_status", ""),
+                               "source_sha256": record.get("source_sha256", ""),
+                               "content": content,
+                               "terms": Counter(tokens(record.get("title", "") + "\n" + content))})
+        self.record_count += len(records)
+        self.documents.append({"source": path.relative_to(self.directory).as_posix(),
+                               "sha256": hashlib.sha256(raw).hexdigest(), "records": len(records),
+                               "characters": sum(len(r["text"]) for r in records)})
 
     def _load(self):
         chunks = []
         if self.directory.exists():
-            for path in sorted(self.directory.rglob("*")):
-                if not path.is_file() or path.suffix.lower() not in SUPPORTED or path.name.startswith("."):
+            for path in knowledge_files(self.directory):
+                raw = path.read_bytes()
+                if path.suffix.lower() == ".jsonl":
+                    self._structured_records(path, raw, chunks)
                     continue
-                text = extract(path.name, path.read_bytes())
+                text = extract(path.name, raw)
+                digest = hashlib.sha256(raw).hexdigest()
+                self.documents.append({"source": path.relative_to(self.directory).as_posix(),
+                                       "sha256": digest, "characters": len(text)})
                 for start in range(0, len(text), 850):
                     content = text[start:start + 1000]
                     chunks.append({"id": f"{path.relative_to(self.directory).as_posix()}:{start}",
                                    "source": path.relative_to(self.directory).as_posix(),
                                    "location": f"字符 {start + 1}–{start + len(content)}",
-                                   "content": content, "terms": Counter(tokens(content))})
+                                   "content": content, "source_sha256": digest, "terms": Counter(tokens(content))})
         self.chunks = chunks
+
+    def status(self):
+        if self.chunks is None:
+            self._load()
+        return {"ready": bool(self.chunks), "file_count": len(self.documents),
+                "chunk_count": len(self.chunks), "record_count": self.record_count, "documents": self.documents}
 
     def retrieve(self, query, top_k=4):
         if self.chunks is None:
             self._load()
         if not self.chunks:
-            return [], ["本地知识库为空：尚未接入原法规资料，本次无法据此形成完整合规结论。"]
+            return [], ["自有知识库为空：请先导入法规或制度资料，本次无法据此形成完整合规结论。"]
         terms = set(tokens(query))
         n = len(self.chunks)
         average = sum(sum(c["terms"].values()) for c in self.chunks) / n or 1
@@ -109,60 +157,13 @@ class LocalKnowledge:
             if score > 0:
                 scored.append({k: v for k, v in c.items() if k != "terms"} | {"score": round(score, 5)})
         scored.sort(key=lambda c: (-c["score"], c["id"]))
-        warnings = ["本地采用 BM25 文本检索，与 Dify 原向量检索结果不保证一致。"]
+        warnings = []
         if not scored:
             warnings.append("未检索到相关依据，请补充适用法规或调整问题。")
         return scored[:top_k], warnings
 
 
-class DifyKnowledge:
-    def __init__(self, settings):
-        self.settings = settings
-
-    def retrieve(self, query, top_k=4):
-        s = self.settings
-        if not s.dify_api_key or not s.dify_dataset_id:
-            raise ConfigurationError("请配置 DIFY_DATASET_API_KEY 和 DIFY_DATASET_ID（知识库真实 UUID，不能使用 DSL 中的加密标识）。")
-        try:
-            UUID(s.dify_dataset_id)
-        except ValueError:
-            raise ConfigurationError("DIFY_DATASET_ID 必须是知识库真实 UUID，请从 Dify 知识库页面或 API 获取。") from None
-        validate_endpoint(s.dify_base_url)
-        # DSL omits dataset-level embedding/search settings. Leave them at the server defaults.
-        payload = {"query": query[:250]}
-        if s.dify_search_method:
-            payload["retrieval_model"] = {"search_method": s.dify_search_method,
-                                          "top_k": top_k, "reranking_enable": False,
-                                          "score_threshold_enabled": False}
-        warnings = ["Dify 检索使用知识库端配置，返回片段最多保留 4 条；底层索引配置不在 DSL 中。"]
-        if len(query) > 250:
-            warnings.append("Dify 检索接口限制 250 字，本次检索使用查询前 250 字；模型仍接收完整审查材料。")
-        try:
-            r = httpx.post(f"{s.dify_base_url}/datasets/{s.dify_dataset_id}/retrieve", json=payload,
-                           headers={"Authorization": f"Bearer {s.dify_api_key}"}, timeout=s.timeout)
-            r.raise_for_status()
-            result = []
-            for record in r.json()["records"][:top_k]:
-                seg = record["segment"]
-                if seg.get("enabled") is False:
-                    continue
-                result.append({"id": seg["id"], "source": seg.get("document", {}).get("name", "Dify 知识库"),
-                               "location": f"片段 {seg.get('position', '')}", "content": seg["content"],
-                               "score": record.get("score", 0)})
-            if not result:
-                warnings.append("Dify 知识库没有返回相关依据。")
-            return result, warnings
-        except httpx.HTTPStatusError as exc:
-            raise ProviderError(f"Dify 知识库请求失败：HTTP {exc.response.status_code}。请检查知识库密钥、UUID 和 API 权限。") from None
-        except httpx.RequestError:
-            raise ProviderError("Dify 知识库连接失败或超时。") from None
-        except (KeyError, TypeError, ValueError):
-            raise ProviderError("Dify 知识库响应格式不符合预期。") from None
-
-
 def knowledge_provider(settings):
-    if settings.knowledge_backend == "dify":
-        return DifyKnowledge(settings)
     if settings.knowledge_backend == "local":
         return LocalKnowledge(settings.knowledge_dir)
-    raise ConfigurationError("KNOWLEDGE_BACKEND 只能为 local 或 dify。")
+    raise ConfigurationError("当前版本仅使用项目自有知识库，请将 KNOWLEDGE_BACKEND 设为 local。")

@@ -12,7 +12,7 @@ from streamlit.testing.v1 import AppTest
 
 from finance_assistant.config import ROOT, Settings
 from finance_assistant.documents import InputError, extract
-from finance_assistant.providers import ChatModel, DifyKnowledge, LocalKnowledge, ProviderError, ConfigurationError
+from finance_assistant.providers import ChatModel, LocalKnowledge, ProviderError, ConfigurationError, knowledge_provider
 from finance_assistant.workflow import Workflow, WorkflowError, load_dsl, CATEGORIES, CLASSIFIER, CONTRACT_REVIEW, CONTRACT_RETRIEVER, GENERAL_RETRIEVER, GENERAL_REVIEW, report_markdown
 
 
@@ -184,7 +184,8 @@ class InputAndProviderTests(unittest.TestCase):
             self.assertEqual(len(result), 1)
             self.assertEqual(result[0]["source"], "contract.txt")
             self.assertTrue(result[0]["location"])
-            self.assertIn("BM25", warnings[0])
+            self.assertEqual(warnings, [])
+            self.assertEqual(len(result[0]["source_sha256"]), 64)
 
     def test_model_http_payload_and_error_redaction(self):
         settings = Settings(api_key="SECRET-DO-NOT-PRINT")
@@ -203,16 +204,20 @@ class InputAndProviderTests(unittest.TestCase):
         with self.assertRaises(ConfigurationError):
             ChatModel(Settings()).complete([], {"name": "deepseek-flash"})
 
-    def test_dify_uuid_and_response_mapping(self):
-        with self.assertRaises(ConfigurationError):
-            DifyKnowledge(Settings(dify_api_key="secret", dify_dataset_id="encrypted-export-id")).retrieve("query")
-        settings = Settings(dify_api_key="secret", dify_dataset_id="12345678-1234-1234-1234-123456789abc")
-        response = httpx.Response(200, json={"records": [{"score": .9, "segment": {"id": "segment", "position": 3, "content": "法条", "document": {"name": "条例"}}}]}, request=httpx.Request("POST", "https://api.dify.ai/v1"))
-        with patch("finance_assistant.providers.httpx.post", return_value=response) as call:
-            records, warnings = DifyKnowledge(settings).retrieve("问题" * 200)
-            self.assertEqual(records[0]["source"], "条例")
-            self.assertEqual(len(call.call_args.kwargs["json"]["query"]), 250)
-            self.assertTrue(any("250" in w for w in warnings))
+    def test_own_knowledge_never_calls_external_service(self):
+        with retained_test_directory() as tmp:
+            directory = Path(tmp)
+            (directory / "测试制度.txt").write_text("合同条款 违约责任 信息披露" * 80, encoding="utf-8")
+            provider = knowledge_provider(Settings(knowledge_dir=directory))
+            with patch("finance_assistant.providers.httpx.post", side_effect=AssertionError("Knowledge retrieval must not make network calls")):
+                status = provider.status()
+                records, warnings = provider.retrieve("合同违约责任")
+            self.assertTrue(status["ready"])
+            self.assertEqual(status["file_count"], 1)
+            self.assertGreater(status["chunk_count"], 1)
+            self.assertTrue(records)
+            self.assertEqual(records[0]["source_sha256"], status["documents"][0]["sha256"])
+            self.assertEqual(warnings, [])
 
 
 class InterfaceTests(unittest.TestCase):
@@ -232,16 +237,16 @@ class InterfaceTests(unittest.TestCase):
                                       "KNOWLEDGE_BACKEND": "dify"})
             self.assertTrue(settings.evaluation_mode)
             self.assertEqual(settings.api_key, "cloud-test-key")
-            self.assertEqual(settings.knowledge_backend, "dify")
+            self.assertEqual(settings.knowledge_backend, "local")
         with patch.dict(os.environ, {"MODEL_API_KEY": "environment-test-key"}):
             self.assertEqual(Settings.load({"MODEL_API_KEY": "cloud-test-key"}).api_key, "environment-test-key")
 
     def test_reviewer_mode_hides_connection_controls_and_submits(self):
-        with patch.dict(os.environ, {}, clear=True):
+        with retained_test_directory() as tmp, patch.dict(os.environ, {"KNOWLEDGE_DIR": tmp}, clear=True):
+            (Path(tmp) / "测试制度.txt").write_text("测试制度，非真实法规。合同条款需核对。", encoding="utf-8")
             app = AppTest.from_file(str(ROOT / "app.py"), default_timeout=20)
             app.secrets.update({"EVALUATION_MODE": True, "MODEL_API_KEY": "cloud-test-key",
-                                "KNOWLEDGE_BACKEND": "dify", "DIFY_DATASET_API_KEY": "dataset-test-key",
-                                "DIFY_DATASET_ID": "12345678-1234-1234-1234-123456789abc"})
+                                "KNOWLEDGE_BACKEND": "local"})
             app.run()
             self.assertEqual(len(app.exception), 0)
             self.assertEqual(len(app.text_input), 0)
@@ -255,7 +260,6 @@ class InterfaceTests(unittest.TestCase):
             self.assertEqual(app.session_state.reviews[0]["mode"], "corrected")
             visible = " ".join(str(x.value) for x in app.markdown)
             self.assertNotIn("cloud-test-key", visible)
-            self.assertNotIn("dataset-test-key", visible)
 
     def test_reviewer_mode_blocks_unconfigured_service(self):
         with patch.dict(os.environ, {}, clear=True):
