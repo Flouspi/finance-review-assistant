@@ -42,3 +42,13 @@
 将最新“GitHub上传文件”文件夹中的内容更新到仓库根目录。新增的 review_desk.py、ui_reports.py、ui_styles.py 必须与 app.py 同时上传，不能只替换 app.py。保留 knowledge 文件夹与原 YAML，云端入口仍为 judge_app.py。
 
 提交后在 Streamlit Reboot app，再刷新页面。模型密钥仍只在平台 Secrets 中配置，评委无需填写。
+
+### 2026-11-07 云端入口兼容处理
+
+实际访问公网应用时，新会话仍显示已移除的介绍副标题和页脚。通过 Streamlit 的 new_session 消息确认部署入口为 /mount/src/finance-review-assistant/judge_app.py。无法访问私有仓库，因此未断定远端文件、提交或分支具体哪一步未生效。
+
+judge_app.py 增加只含样式的 st.html 调用：仅在新建页隐藏旧版 case-meta，同时在各页隐藏旧版 workspace-foot。样式进入事件容器，不增加可见行。原有 review_desk.py 仍从源代码删除这两处文字；入口兼容规则让仍载入旧界面模块的部署也不再显示它们。评委模式、模型调用及审查结果不受影响。
+
+入口向云日志输出 [ui-text-removal-20261107] 及 review_desk.py 文件 SHA-256，仅用于定位部署版本，不展示在产品界面，不输出密钥或材料。更新时将新版 judge_app.py 覆盖到仓库根目录并提交到部署分支。
+
+32 项测试通过；独立 Chrome 加载特意恢复了两句旧文字的本地兼容夹具，验证两句不出现在可见页面，上传、输入和提交控件仍在，无水平溢出。兼容夹具仅在 work 下，不打包。本次未向 GitHub 提交或更新公网。

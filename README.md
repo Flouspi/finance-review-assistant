@@ -1,4 +1,4 @@
-# 金融合规智能审查助手 · LangGraph
+# 金融合规智能审查助手 · LangGraph 参赛工程
 
 基于用户提供的 `金融合规智能审查助手BETA1.0.yml` 迁移，实际使用 LangGraph `StateGraph` 执行节点与条件分支，不通过 Dify 应用接口代理回答。
 

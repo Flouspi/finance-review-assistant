@@ -225,8 +225,9 @@ def main():
         meta = f"{current['state'].get('category', '合规审查')} · {len(current['state'].get('citations', []))} 条参考片段"
         status = "待人工复核" if current.get("human_review") else "审查完成"
     else:
-        meta, status = "合同 · 产品 · 投资范围 · 营销宣传", "等待材料"
-    st.markdown(f'<div class="case-header"><div><div class="case-title">{e(title)}</div><div class="case-meta">{e(meta)}</div></div><div class="case-status">{e(status)}</div></div>', unsafe_allow_html=True)
+        meta, status = "", "等待材料"
+    meta_html = f'<div class="case-meta">{e(meta)}</div>' if meta else ""
+    st.markdown(f'<div class="case-header"><div><div class="case-title">{e(title)}</div>{meta_html}</div><div class="case-status">{e(status)}</div></div>', unsafe_allow_html=True)
 
     missing = []
     if not settings.api_key:
@@ -271,8 +272,6 @@ def main():
     with st.form("review_form", clear_on_submit=False):
         query = st.text_area("审查内容", key="query_draft", height=100, placeholder="继续追问，或输入需要审查的内容……" if current else "输入审查要求，或上传一份文件……")
         submitted = st.form_submit_button("开始审查", type="primary", disabled=reviewer_unavailable)
-    st.markdown('<div class="workspace-foot">模型生成的审查意见须经人工复核。记录仅保留在当前会话。</div>', unsafe_allow_html=True)
-
     if submitted:
         runtime = replace(settings, api_key=entered_key or settings.api_key, base_url=base_url.rstrip("/"), model=model_name)
         if not runtime.api_key:
