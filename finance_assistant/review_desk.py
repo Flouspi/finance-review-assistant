@@ -85,17 +85,17 @@ def conversation_view(record):
     counts = risk_counts(report)
     summary = report.get("summary") if report else "审查回答已生成，可展开查看完整内容。"
     if counts is not None:
-        intro = f"已完成审查。识别 {counts['高']} 个高风险、{counts['中']} 个中风险、{counts['低']} 个低风险项。"
+        intro = f"高风险 {counts['高']} 项 · 中风险 {counts['中']} 项 · 低风险 {counts['低']} 项"
         if counts["待核实"]:
-            intro += f" 另有 {counts['待核实']} 项待核实。"
+            intro += f" · 待核实 {counts['待核实']} 项"
     else:
         intro = "已完成审查。"
-    st.markdown(f'<div class="assistant-row"><div class="avatar ai">AI</div><div><div class="assistant-title">{e(intro)}</div><div class="assistant-sub">{e(summary)}</div></div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="assistant-row"><div class="avatar ai">审</div><div><div class="assistant-title">{e(intro)}</div><div class="assistant-sub">{e(summary)}</div></div></div>', unsafe_allow_html=True)
     for warning in record["state"].get("warnings", []):
         st.warning(warning)
     if report and report["findings"]:
         ranked = sorted(report["findings"], key=lambda x: {"高": 0, "中": 1, "待核实": 2, "低": 3}[x["level"]])
-        st.caption("先看最需要处理的一项：")
+        st.caption("优先处理")
         finding_view(ranked[0], 0, record)
         if len(ranked) > 1:
             with st.expander(f"查看其余 {len(ranked) - 1} 项风险"):
@@ -129,21 +129,21 @@ def dashboard_view(record):
         if not cards:
             cards.append('<div class="empty-state">本次没有结构化风险条目。<br>请结合完整回答判断资料是否充分。</div>')
         name = "、".join(record.get("filenames", [])) or "输入内容"
-        st.markdown(f'<div class="paper"><div class="paper-head">{e(name)} / REVIEW<span>条款摘录</span></div><div class="paper-body">{"".join(cards)}<div class="paper-foot">审查材料：{len(record.get("filenames", []))} 份附件 · 参考片段：{len(record["state"].get("citations", []))} 条<br>摘录来自模型输出，是否匹配原文已逐项标注。</div></div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="paper"><div class="paper-head">{e(name)}<span>条款摘录</span></div><div class="paper-body">{"".join(cards)}<div class="paper-foot">附件 {len(record.get("filenames", []))} 份 · 参考片段 {len(record["state"].get("citations", []))} 条</div></div></div>', unsafe_allow_html=True)
     with statistics:
         overall, distribution = st.columns([.85, 1.2])
         with overall:
-            color = {"高": "#bf2b22", "中": "#c48716", "低": "#0d9488"}.get(report["overall_risk"], "#73849a")
-            st.markdown(f'<div class="metric-card"><div class="section-label">综合风险等级</div><div class="metric-value" style="color:{color}">{e(report["overall_risk"])}</div><div class="metric-note">基于本次模型审查<br>共 {sum(counts.values())} 个风险条目 · 不代表法律定论</div></div>', unsafe_allow_html=True)
+            color = {"高": "#af443e", "中": "#946e35", "低": "#687787"}.get(report["overall_risk"], "#747d89")
+            st.markdown(f'<div class="metric-card"><div class="section-label">综合风险等级</div><div class="metric-value" style="color:{color}">{e(report["overall_risk"])}</div><div class="metric-note">共 {sum(counts.values())} 个风险条目<br>待人工复核</div></div>', unsafe_allow_html=True)
         with distribution:
             total = sum(counts.values())
             bars = ""
             for level in ["高", "中", "低", "待核实"]:
                 percentage = counts[level] / total * 100 if total else 0
                 bars += f'<div class="distribution-row"><span class="distribution-label">{e(level)}</span><div class="bar-track"><div class="bar {level_class(level)}" style="width:{percentage:.2f}%"></div></div><span class="distribution-count">{counts[level]}项</span></div>'
-            st.markdown(f'<div class="metric-card"><div class="section-label">风险分布 / DISTRIBUTION</div>{bars}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="metric-card"><div class="section-label">风险分布</div>{bars}</div>', unsafe_allow_html=True)
         rows = "".join(f'<div class="top-row">{badge(item["level"])}<div class="top-text">{e(item["title"])}<div class="top-advice">{e(item["recommendation"] or "补充材料后核实")}</div></div></div>' for item in findings)
-        st.markdown(f'<div class="top-findings"><div class="section-label">关键发现与建议 / TOP FINDINGS</div>{rows or "本次未生成风险条目，请阅读完整回答。"}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="top-findings"><div class="section-label">主要问题与建议</div>{rows or "本次未生成风险条目，请阅读完整回答。"}</div>', unsafe_allow_html=True)
 
 
 def source_view(record):
@@ -167,7 +167,7 @@ def source_view(record):
 
 
 def main():
-    st.set_page_config(page_title="智合规 · 金融合规审查", page_icon="◈", layout="wide")
+    st.set_page_config(page_title="智合规 · 金融合规审查", page_icon="📄", layout="wide")
     st.markdown(CSS, unsafe_allow_html=True)
     dsl = load_dsl()
     try:
@@ -188,7 +188,7 @@ def main():
     entered_key = ""
     base_url, model_name, mode = settings.base_url, settings.model or "deepseek-flash", "corrected"
     with st.sidebar:
-        st.markdown('<div class="brand">智合规</div><div class="brand-sub">COMPLIANCE AGENT</div>', unsafe_allow_html=True)
+        st.markdown('<div class="brand">智合规</div><div class="brand-sub">金融合规审查</div>', unsafe_allow_html=True)
         if st.button("＋  新建审查", type="primary", width="stretch"):
             ss.active_review = None
             ss.query_draft = ""
@@ -196,11 +196,11 @@ def main():
             st.rerun()
         st.markdown('<div class="nav-label">审查记录</div>', unsafe_allow_html=True)
         if not ss.reviews:
-            st.markdown('<div class="nav-empty">暂无审查记录<br>上传材料，开始第一份审查。</div>', unsafe_allow_html=True)
+            st.markdown('<div class="nav-empty">暂无记录</div>', unsafe_allow_html=True)
         for i in reversed(range(len(ss.reviews))):
             entry = ss.reviews[i]
             name = "、".join(entry.get("filenames", [])) or entry.get("query", "内容审查")
-            prefix = "◈  " if i == ss.active_review else "   "
+            prefix = "当前 · " if i == ss.active_review else ""
             if st.button(prefix + name[:28], key=f"history_{i}", width="stretch"):
                 ss.active_review = i
                 ss.query_draft = ""
@@ -215,17 +215,17 @@ def main():
                 mode = "corrected" if selected == "修正版" else "faithful"
                 st.caption("法规资料来自项目自有知识库。")
         with st.container(key="sidebar_footer"):
-            st.markdown(f'<div class="sidebar-stat">当前会话已审 {len(ss.reviews)} 份</div><div class="sidebar-identity"><span class="identity-orb">◈</span><span>自有法规知识库<br>资料可追溯</span></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="sidebar-stat">本次会话 · {len(ss.reviews)} 份审查</div><div class="sidebar-identity">自有法规知识库</div>', unsafe_allow_html=True)
 
     active = ss.active_review
     current = ss.reviews[active] if isinstance(active, int) and 0 <= active < len(ss.reviews) else None
     title = "、".join(current.get("filenames", [])) if current else "新建合规审查"
     title = title or current.get("query", "内容审查")[:40]
     if current:
-        meta = f"{current['state'].get('category', '合规审查')} · {len(current['state'].get('citations', []))} 条参考片段 · 审查完成"
+        meta = f"{current['state'].get('category', '合规审查')} · {len(current['state'].get('citations', []))} 条参考片段"
         status = "待人工复核" if current.get("human_review") else "审查完成"
     else:
-        meta, status = "合同、产品、投资范围与营销宣传的一站式审查", "等待材料"
+        meta, status = "合同 · 产品 · 投资范围 · 营销宣传", "等待材料"
     st.markdown(f'<div class="case-header"><div><div class="case-title">{e(title)}</div><div class="case-meta">{e(meta)}</div></div><div class="case-status">{e(status)}</div></div>', unsafe_allow_html=True)
 
     missing = []
@@ -258,7 +258,7 @@ def main():
                 current["human_review"] = True
                 st.rerun()
     else:
-        st.markdown('<div class="welcome"><div class="welcome-icon">◈</div><div class="welcome-kicker">COMPLIANCE REVIEW WORKSPACE</div><h1>让每一次审查，都有据可循。</h1><p>上传合同或输入业务材料，识别值得关注的风险条款。法规依据、相关案例与修改建议，在同一工作台中逐项核对。</p></div>', unsafe_allow_html=True)
+        st.markdown('<div class="welcome"><h1>提交审查材料</h1><p>上传文件或输入正文。选择下方类型可填入审查要求。</p></div>', unsafe_allow_html=True)
         questions = dsl["workflow"]["features"]["suggested_questions"]
         for col, label, question in zip(st.columns(4), ["合同审查", "产品合规", "投资范围", "营销宣传"], questions):
             if col.button(label, width="stretch"):
@@ -266,11 +266,12 @@ def main():
 
     with st.expander("上传材料" + (" / 开始新的审查" if current else ""), expanded=not bool(current)):
         files = st.file_uploader("选择待审查材料", type=["txt", "md", "csv", "pdf", "docx"], accept_multiple_files=True,
-                                 key=f"case_files_{ss.upload_nonce}", help="最多3份，每份15MB。扫描PDF需先OCR；附件不会自动加入法规知识库。")
+                                 key=f"case_files_{ss.upload_nonce}", max_upload_size=15,
+                                 help="最多3份，每份15MB。扫描PDF需先OCR；附件不会自动加入法规知识库。")
     with st.form("review_form", clear_on_submit=False):
         query = st.text_area("审查内容", key="query_draft", height=100, placeholder="继续追问，或输入需要审查的内容……" if current else "输入审查要求，或上传一份文件……")
         submitted = st.form_submit_button("开始审查", type="primary", disabled=reviewer_unavailable)
-    st.markdown('<div class="workspace-foot">结果由 AI 辅助生成，请结合原文及适用依据复核后使用。审查记录保存在当前会话。</div>', unsafe_allow_html=True)
+    st.markdown('<div class="workspace-foot">模型生成的审查意见须经人工复核。记录仅保留在当前会话。</div>', unsafe_allow_html=True)
 
     if submitted:
         runtime = replace(settings, api_key=entered_key or settings.api_key, base_url=base_url.rstrip("/"), model=model_name)
